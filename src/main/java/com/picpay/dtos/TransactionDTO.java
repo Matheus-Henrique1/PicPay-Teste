@@ -1,6 +1,18 @@
 package com.picpay.dtos;
 
+import lombok.*;
+
 import java.math.BigDecimal;
 
-public record TransactionDTO(BigDecimal value, Long senderId, Long receiveId) {
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@EqualsAndHashCode
+public class TransactionDTO {
+
+    private BigDecimal value;
+    private Long senderId;
+    private Long receiveId;
+
 }

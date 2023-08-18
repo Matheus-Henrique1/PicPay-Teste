@@ -1,9 +1,10 @@
 package com.picpay.services;
 
+import com.picpay.dtos.ReturnTransactionDTO;
 import com.picpay.dtos.TransactionDTO;
 
 public interface TransactionService {
 
-    void createTransacation(TransactionDTO transaction) throws Exception;
+    ReturnTransactionDTO createTransacation(TransactionDTO transactionDTO) throws Exception;
 
 }

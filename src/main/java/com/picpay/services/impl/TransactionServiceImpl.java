@@ -1,9 +1,12 @@
 package com.picpay.services.impl;
 
+import com.picpay.config.ModelMapperConfig;
 import com.picpay.domain.transaction.Transaction;
 import com.picpay.domain.user.User;
+import com.picpay.dtos.ReturnTransactionDTO;
 import com.picpay.dtos.TransactionDTO;
 import com.picpay.repositories.TransactionRepository;
+import com.picpay.services.NotificationService;
 import com.picpay.services.TransactionService;
 import com.picpay.services.UserService;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,42 +23,50 @@ import java.util.Map;
 public class TransactionServiceImpl implements TransactionService {
 
     public TransactionServiceImpl(TransactionRepository transactionRepository, UserService userService,
-                                  RestTemplate restTemplate) {
+                                  RestTemplate restTemplate, NotificationService notificationService) {
         this.transactionRepository = transactionRepository;
         this.userService = userService;
         this.restTemplate = restTemplate;
+        this.notificationService = notificationService;
     }
 
     private TransactionRepository transactionRepository;
     private UserService userService;
     private RestTemplate restTemplate;
+    private NotificationService notificationService;
 
     @Value("${url.authorize.transaction}")
     private String urlAuthorizeTransaction;
 
     @Override
-    public void createTransacation(TransactionDTO transaction) throws Exception {
-        User sender = userService.findById(transaction.senderId());
-        User receiver = userService.findById(transaction.receiveId());
+    public ReturnTransactionDTO createTransacation(TransactionDTO transactionDTO) throws Exception {
+        User sender = userService.findById(transactionDTO.getSenderId());
+        User receiver = userService.findById(transactionDTO.getReceiveId());
 
-        userService.validateTransaction(sender, transaction.value());
+        userService.validateTransaction(sender, transactionDTO.getValue());
 
-        if (!authorizeTransaction(sender, transaction.value())) {
+        if (!authorizeTransaction(sender, transactionDTO.getValue())) {
             throw new Exception("Transação não autorizada.");
         }
 
         Transaction newTransaction = new Transaction();
-        newTransaction.setAmount(transaction.value());
+        newTransaction.setAmount(transactionDTO.getValue());
         newTransaction.setSender(sender);
         newTransaction.setReceiver(receiver);
         newTransaction.setTimesTamp(LocalDateTime.now());
 
-        sender.setBalance(sender.getBalance().subtract(transaction.value()));
-        receiver.setBalance(receiver.getBalance().add(transaction.value()));
+        sender.setBalance(sender.getBalance().subtract(transactionDTO.getValue()));
+        receiver.setBalance(receiver.getBalance().add(transactionDTO.getValue()));
 
-        transactionRepository.save(newTransaction);
+        Transaction transaction = transactionRepository.save(newTransaction);
+        ReturnTransactionDTO dto = ModelMapperConfig.convertTransactionToDto(transaction);
         userService.saveUser(sender);
         userService.saveUser(receiver);
+
+        notificationService.sendNotification(sender, "Transação enviada com sucesso!");
+        notificationService.sendNotification(receiver, "Transação recebida com sucesso!");
+
+        return dto;
     }
 
     private boolean authorizeTransaction(User sender, BigDecimal value) {

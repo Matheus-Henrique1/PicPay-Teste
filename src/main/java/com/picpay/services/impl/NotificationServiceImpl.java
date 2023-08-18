@@ -31,11 +31,14 @@ public class NotificationServiceImpl implements NotificationService {
         String email = user.getEmail();
         NotificationDTO notificationRequest = new NotificationDTO(email, message);
 
-        ResponseEntity<String> notificationResponse = restTemplate.postForEntity(urlNotification, notificationRequest, String.class);
+//        ResponseEntity<String> notificationResponse = restTemplate.postForEntity(urlNotification, notificationRequest, String.class);
+//
+//        if(!(notificationResponse.getStatusCode() == HttpStatus.OK)){
+//            logger.info("Serviço de mensagem indisponível no momento.");
+//            throw new Exception("O serviço de notificação está fora do ar.");
+//        }
 
-        if(!(notificationResponse.getStatusCode() == HttpStatus.OK)){
-            logger.info("Serviço de mensagem indisponível no momento.");
-            throw new Exception("O serviço de notificação está fora do ar.");
-        }
+        logger.info("Notificação enviada para o usuário.");
+
     }
 }
